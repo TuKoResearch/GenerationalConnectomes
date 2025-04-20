@@ -3,6 +3,7 @@ import sys
 import datetime
 import fit_mapping
 
+
 # Setup
 log = True  # Set to False to run without logging
 logs_dir = './logs/'

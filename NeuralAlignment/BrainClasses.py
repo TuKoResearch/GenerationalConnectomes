@@ -6,6 +6,7 @@ from scipy.stats import spearmanr, pearsonr, kendalltau
 from utils import *
 torch.set_default_dtype(torch.double)
 
+
 class ANNEncoder:
     def __init__(self, source_model: str = 'gpt2',
                  sent_embed: str = 'last-tok',

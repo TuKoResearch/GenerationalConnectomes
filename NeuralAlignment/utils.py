@@ -19,6 +19,7 @@ import re
 import json
 from scipy.spatial.distance import cosine
 
+
 torch.set_default_dtype(torch.double)
 
 user = getpass.getuser()

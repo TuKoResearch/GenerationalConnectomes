@@ -25,6 +25,8 @@ matplotlib.rcParams['ps.fonttype'] = 42
 matplotlib.rcParams['svg.fonttype'] = 'none'
 
 from resources import *
+
+
 def shorten_savestr(savestr: str):
     """
     Replace True and False with 1 and 0.

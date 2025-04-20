@@ -3,6 +3,7 @@ from os.path import join
 import getpass
 user = getpass.getuser()
 
+
 ROOTDIR = os.path.abspath(join(os.path.dirname( __file__ )))
 
 # Default paths

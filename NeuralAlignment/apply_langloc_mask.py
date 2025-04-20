@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import os
+
+
 def process_activations(fname_actv, fname_mask, sent_embed='last', output_dir=None):
     """
     Processes activations and applies a mask to filter units.
@@ -99,5 +101,3 @@ os.makedirs(outputdir, exist_ok=True)
 
 for fname_actv, fname_mask in d.items():
     process_activations(fname_actv, fname_mask, output_dir=outputdir)
-
-
