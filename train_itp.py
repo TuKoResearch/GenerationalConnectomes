@@ -8,11 +8,11 @@ import numpy as np
 import torch
 import wandb
 import importlib
-
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group
 
-from .distributed_dataloader import TokenDistributedDataLoader
+from distributed_dataloader import TokenDistributedDataLoader
+
 
 
 def eval_model(model, dataloader, device, max_iters=100):
@@ -171,8 +171,6 @@ def main():
     parser.add_argument("--log_frequency", default=10, type=int)
     parser.add_argument("--save_to_gcloud", default=False, action="store_true")
     parser.add_argument("--wandb", default=False, action="store_true")
-    parser.add_argument('--model_config', type=str,
-        default='ConnectomePruning.GPT100MConfig')
     parser.add_argument('--optimizer', type=str, default='muon')
     
     ## Initialization Parameters
@@ -275,7 +273,7 @@ def main():
     print(f"tokens per iteration will be: {tokens_per_iter:,}, sequence length: {train_dataloader.T}")
 
     # ----------------------------------------------------------------------------
-    # NEW: Check if there's an existing checkpoint for any generation. If so,
+    # Check if there's an existing checkpoint for any generation. If so,
     # resume from the highest generation checkpoint found.
     # ----------------------------------------------------------------------------
     checkpoint_files = glob.glob(os.path.join("out", args.run_name, "model_generation_*.pt"))

@@ -66,7 +66,6 @@ python train.py --help
 
 In order to run the prunning training you can run:
 
-# Single-GPU debug run
 python train_itp.py \
   --run_name my_experiment \
   --train_data_dir path/to/train/*.bin \

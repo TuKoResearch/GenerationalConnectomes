@@ -10,7 +10,9 @@ import importlib
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group
 
-from .distributed_dataloader import TokenDistributedDataLoader
+from distributed_dataloader import TokenDistributedDataLoader
+from config import GPTConfig
+from model import GPT
 
 
 def eval_model(model, dataloader, device, max_iters=100):
@@ -20,7 +22,7 @@ def eval_model(model, dataloader, device, max_iters=100):
     with torch.no_grad():
         for _ in range(max_iters):
             x_in, x_tgt = dataloader.next_batch()
-            output = model(x_in, targets=x_tgt)  # model returns dict or tuple
+            output = model(x_in, labels=x_tgt)  # model returns dict or tuple
             # handle both styles
             if isinstance(output, dict):
                 loss = output.get('loss')
@@ -45,8 +47,6 @@ def main():
     parser.add_argument("--wandb", default=False, action="store_true")
     parser.add_argument("--push_to_hf", default=False, action="store_true",
                         help="Push trained model to Hugging Face hub after training")
-    parser.add_argument('--model_config', type=str,
-                        default='ConnectomePruning.GPT100MConfig')
     parser.add_argument('--optimizer', type=str, default='adamw')
 
     # Initialization parameters
@@ -114,17 +114,8 @@ def main():
     torch.backends.cudnn.allow_tf32 = True
 
     # ---------------------- Load model config ----------------------
-    module_path, class_name = args.model_config.rsplit('.', 1)
-    module = importlib.import_module(module_path)
-    init_cfg_cls = getattr(module, class_name)
-    cfg = init_cfg_cls()
+    cfg = GPTConfig()
     cfg.block_size = args.max_seq_length
-    module_path, class_name = cfg.model_type.rsplit('.', 1)
-    module = importlib.import_module(module_path)
-    model_cls = getattr(module, class_name)
-    for key, value in vars(args).items():
-        if hasattr(cfg, key) and value is not None:
-            setattr(cfg, key, value)
 
     # ----------------------- DataLoaders -----------------------
     train_dataloader = TokenDistributedDataLoader(
@@ -142,12 +133,12 @@ def main():
     print(f"tokens per iteration will be: {tokens_per_iter:,}, sequence length: {train_dataloader.T}")
 
     # ---------------------- Initialize model ----------------------
-    model = model_cls(cfg)
+    model = GPT(cfg)
 
     # ----------------------- Sparsity map -----------------------
     sparse_mask = {}
     if args.init_from is not None:
-        checkpoint = torch.load(args.init_from, map_location=device)
+        checkpoint = torch.load(args.init_from, map_location=device, weights_only=False)
         # support legacy keys
         ckpt_state = checkpoint.get('model_state_dict', checkpoint.get('weights', checkpoint))
         checkpoint_params = ckpt_state
@@ -292,7 +283,7 @@ def main():
             if ddp:
                 model.require_backward_grad_sync = (micro_step == gradient_accumulation_steps - 1)
             with ctx:
-                output = model(x_in, targets=x_tgt)
+                output = model(x_in, labels=x_tgt)
                 if isinstance(output, dict):
                     loss = output['loss']
                 else:
