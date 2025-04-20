@@ -37,9 +37,15 @@ def main():
     ### GET ARGUMENTS ###
     parser = argparse.ArgumentParser()
     # Run parameters
-    parser.add_argument("--run_name", type=str, required=True)
-    parser.add_argument("--train_data_dir", type=str, required=True)
-    parser.add_argument("--val_data_dir", type=str, required=True)
+    parser.add_argument("--run_name", type=str, 
+                        default="test")
+                        # required=True)
+    parser.add_argument("--train_data_dir", type=str, 
+                        default="/ccn2a/dataset/fineweb/fineweb-10b/*.bin")
+                        # required=True)
+    parser.add_argument("--val_data_dir", type=str, 
+                        default="/ccn2a/dataset/fineweb/fineweb-val/*.bin")
+                        # required=True)
     parser.add_argument("--debug", default=False, action="store_true")
     parser.add_argument("--save_frequency", default=1000, type=int)
     parser.add_argument("--eval_frequency", default=250, type=int)
@@ -50,7 +56,7 @@ def main():
     parser.add_argument('--optimizer', type=str, default='adamw')
 
     # Initialization parameters
-    parser.add_argument("--init_from", default=None, type=str)
+    parser.add_argument("--init_from", default="model_generation_5.pt", type=str)
     parser.add_argument("--init_method", default="init_pruned", type=str)
     parser.add_argument("--init_alpha", default=0.2, type=float)
     parser.add_argument("--fully_train_embs", default=False, action="store_true")
@@ -142,6 +148,14 @@ def main():
         # support legacy keys
         ckpt_state = checkpoint.get('model_state_dict', checkpoint.get('weights', checkpoint))
         checkpoint_params = ckpt_state
+        # remove _orig_mod. prefix
+        for key in list(ckpt_state.keys()):
+            if key.startswith("module."):
+                new_key = key.replace("module.", "")
+                ckpt_state[new_key] = ckpt_state.pop(key)
+            if key.startswith("_orig_mod."):
+                new_key = key.replace("_orig_mod.", "")
+                ckpt_state[new_key] = ckpt_state.pop(key)
 
         # init_pruned or other methods
         if args.init_method == "init_pruned":
@@ -262,7 +276,7 @@ def main():
                     'iteration': it,
                     'tokens': tokens_per_iter * it,
                     'best_val_loss': best_val_loss,
-                    'cfg': cfg_to_dict(cfg),
+                    'cfg': cfg.to_dict(),
                     'args': vars(args),
                 }
                 torch.save(best_ckpt, os.path.join(output_path, "model_best.pt"))
@@ -273,7 +287,7 @@ def main():
                     'iteration': it,
                     'tokens': tokens_per_iter * it,
                     'best_val_loss': best_val_loss,
-                    'cfg': cfg_to_dict(cfg),
+                    'cfg': cfg.to_dict(),
                     'args': vars(args),
                 }
                 torch.save(ckpt, os.path.join(output_path, f"model_{it:06d}.pt"))

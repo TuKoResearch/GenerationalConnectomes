@@ -61,7 +61,7 @@ You can reproduce our evaluations by running the following evaluations using the
 1. **Run mmlu**:
    ```bash
    python evals/mmlu.py \
-     --model_name TuKoResearch/GenerationalPrunning100M \
+     --model_name TuKoResearch/ConnectomeGPT100M \
      --tokenizer_name gpt2 \
      --device cuda:0
    ```
@@ -69,7 +69,7 @@ You can reproduce our evaluations by running the following evaluations using the
 2. **Run hellaswag**:
    ```bash
    python evals/hellaswag.py \
-     --model_name TuKoResearch/GenerationalPrunning100M \
+     --model_name TuKoResearch/ConnectomeGPT100M \
      --tokenizer_name gpt2 \
      --device cuda:0
    ```
@@ -85,7 +85,7 @@ To run the surprisal evaluation script and compute the Pearson correlation betwe
 
 ```bash
 python surprisal_eval.py \
-  --model_name TuKoResearch/GenerationalPrunning100M \
+  --model_name TuKoResearch/ConnectomeGPT100M \
   --tokenizer_name gpt2 \
   --device cuda:0
 ```
@@ -94,9 +94,9 @@ python surprisal_eval.py \
 ---
 
 ## Neural alignment
-We use the Tuckute2024 neural benchmark, which can be downloaded from the following [public repository](https://github.com/gretatuckute/drive_suppress_brains) or [brain-score language](https://github.com/brain-score/language). The cross-validation neural predictivity score can be run from [NeuralAlignment/fit_mapping.py](https://github.com/klemenkotar/ConnectomePruning/blob/main/NeuralAlignment/fit_mapping.py) and looped across layers and models using [NeuralAlignment/loop_fit_mapping.py](https://github.com/klemenkotar/ConnectomePruning/blob/main/NeuralAlignment/loop_fit_mapping.py).
+We use the Tuckute2024 neural benchmark, which can be downloaded from the following [public repository](https://github.com/gretatuckute/drive_suppress_brains) or [brain-score language](https://github.com/brain-score/language). The cross-validation neural predictivity score can be run from [NeuralAlignment/fit_mapping.py](https://github.com/TuKoResearch/GenerationalConnectomes/blob/main/NeuralAlignment/fit_mapping.py) and looped across layers and models using [NeuralAlignment/loop_fit_mapping.py](https://github.com/TuKoResearch/GenerationalConnectomes/blob/main/NeuralAlignment/loop_fit_mapping.py).
 
-In some of the analyses, we first localize the LLM language units, per the approach established in AlKhamissi et al., 2025 (_ACL_), from the [following repository](https://github.com/BKHMSI/llm-localization). We adapted this code (POINTER??) to output a binary mask which marks the LLM language units as 1. The [NeuralAlignment/apply_langloc_mask.py](https://github.com/klemenkotar/ConnectomePruning/blob/main/NeuralAlignment/apply_langloc_mask.py) script takes the the numpy binary mask for a given model, and saves the masked embedding values as a csv file, which can then serve as the input to [NeuralAlignment/fit_mapping.py](https://github.com/klemenkotar/ConnectomePruning/blob/main/NeuralAlignment/fit_mapping.py).
+In some of the analyses, we first localize the LLM language units, per the approach established in AlKhamissi et al., 2025 (_ACL_), from the [following repository](https://github.com/BKHMSI/llm-localization). We adapted this code (POINTER??) to output a binary mask which marks the LLM language units as 1. The [NeuralAlignment/apply_langloc_mask.py](https://github.com/TuKoResearch/GenerationalConnectomes/blob/main/NeuralAlignment/apply_langloc_mask.py) script takes the the numpy binary mask for a given model, and saves the masked embedding values as a csv file, which can then serve as the input to [NeuralAlignment/fit_mapping.py](https://github.com/TuKoResearch/GenerationalConnectomes/blob/main/NeuralAlignment/fit_mapping.py).
 
 The regression outputs can be downloaded [here](https://huggingface.co/datasets/TuKoResearch/GenerationalConnectomesData/resolve/main/SHARE.zip?download=true).
 

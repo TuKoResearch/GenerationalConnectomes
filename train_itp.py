@@ -7,12 +7,12 @@ import argparse
 import numpy as np
 import torch
 import wandb
-import importlib
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group
 
 from distributed_dataloader import TokenDistributedDataLoader
-
+from config import GPTConfig
+from model import GPT
 
 
 def eval_model(model, dataloader, device, max_iters=100):
@@ -23,11 +23,10 @@ def eval_model(model, dataloader, device, max_iters=100):
         for _ in range(max_iters):
             x_in, x_tgt = dataloader.next_batch()
             x_in, x_tgt = x_in.to(device), x_tgt.to(device)
-            logits, loss = model(x_in, targets=x_tgt)
+            logits, loss = model(x_in, labels=x_tgt)
             val_loss.append(loss.item())
 
-    mean_loss = np.mean(val_loss)
-    return mean_loss
+    return float(np.mean(val_loss))
 
 
 def prune_bottom_pct_of_weights(model, sparse_mask, pct_to_prune=0.2, global_pruning=False):
@@ -245,14 +244,8 @@ def main():
     torch.backends.cudnn.allow_tf32 = True
 
     # Load config class
-    module_path, class_name = args.model_config.rsplit('.', 1)
-    module = importlib.import_module(module_path)
-    init_cfg_cls = getattr(module, class_name)
-    cfg = init_cfg_cls()
+    cfg = GPTConfig()
     cfg.block_size = args.max_seq_length
-    module_path, class_name = cfg.model_type.rsplit('.', 1)
-    module = importlib.import_module(module_path)
-    model_cls = getattr(module, class_name)
     for key, value in vars(args).items():
         if hasattr(cfg, key) and value is not None:
             setattr(cfg, key, value)
@@ -298,7 +291,7 @@ def main():
             start_gen_idx = last_gen_idx + 1
 
             # Build the same model
-            model = model_cls(cfg).to(device)
+            model = GPT(cfg).to(device)
 
             # Load that checkpoint
             checkpoint = torch.load(ckpt_path, map_location=device)
@@ -317,7 +310,7 @@ def main():
         else:
             # If no valid generation files matched, just proceed normally
             sparse_mask = {}
-            model = model_cls(cfg).to(device)
+            model = GPT(cfg).to(device)
             start_gen_idx = 0
             weights_rewind_dict = None
 
@@ -335,8 +328,18 @@ def main():
     if start_gen_idx == 0:
         # If we are not resuming from a generation checkpoint, run the usual logic:
         if args.init_from is not None:
-            checkpoint_model = ModelFactory().load_model(args.init_from, force_download=False)
-            checkpoint_params = dict(checkpoint_model.named_parameters())
+            checkpoint = torch.load(args.init_from, map_location=device, weights_only=False)
+            # support legacy keys
+            ckpt_state = checkpoint.get('model_state_dict', checkpoint.get('weights', checkpoint))
+            checkpoint_params = ckpt_state
+            # remove _orig_mod. prefix
+            for key in list(ckpt_state.keys()):
+                if key.startswith("module."):
+                    new_key = key.replace("module.", "")
+                    ckpt_state[new_key] = ckpt_state.pop(key)
+                if key.startswith("_orig_mod."):
+                    new_key = key.replace("_orig_mod.", "")
+                    ckpt_state[new_key] = ckpt_state.pop(key)
 
             if args.init_method == "largest_final_only_dense":
                 for (name, param) in model.named_parameters():
@@ -487,20 +490,18 @@ def main():
                 if val_loss < best_val_loss:
                     best_val_loss = val_loss
                     print(f"Saving model at iteration {it}, best val_loss so far {best_val_loss:.4f}")
-                    raw_model.save(
-                        {
-                            'weights': raw_model.state_dict(),
-                            'iteration': it,
-                            "tokens": tokens_per_iter * it,
-                            'best_val_loss': best_val_loss,
-                            'cfg': cfg_to_dict(cfg),
-                            'args': args,
-                            'mask': sparse_mask
-                        },
-                        os.path.join(output_path, "model_best.pt"),
-                        gcloud=args.save_to_gcloud
-                    )
- 
+                    ckpt = {
+                        'model_state_dict': raw_model.state_dict(),
+                        'iteration': it,
+                        'tokens':  tokens_per_iter * local_it,
+                        'best_val_loss': best_val_loss,
+                        'cfg': cfg.to_dict(),
+                        'args': vars(args),
+                        'mask': sparse_mask
+                    }
+                    out_path = os.path.join(output_path, f"model_best.pt"),
+                    torch.save(ckpt, out_path)
+        
             # Gradient accumulation
             for micro_step in range(gradient_accumulation_steps):
                 if ddp:
@@ -576,19 +577,18 @@ def main():
 
         # Save final checkpoint for this generation
         if master_process:
-            raw_model.save(
-                {
-                    'weights': raw_model.state_dict(),
-                    'iteration': local_it,
-                    "tokens": tokens_per_iter * local_it,
-                    'best_val_loss': best_val_loss,
-                    'cfg': cfg_to_dict(cfg),
-                    'args': args,
-                    'mask': sparse_mask
-                },
-                os.path.join(output_path, f"model_generation_{gen_idx}.pt"),
-                gcloud=args.save_to_gcloud
-            )
+            ckpt = {
+                'model_state_dict': raw_model.state_dict(),
+                'iteration': it,
+                'tokens':  tokens_per_iter * local_it,
+                'best_val_loss': best_val_loss,
+                'cfg': cfg.to_dict(),
+                'args': vars(args),
+                'mask': sparse_mask
+            }
+            out_path = os.path.join(output_path, f"model_generation_{gen_idx}.pt"),
+            torch.save(ckpt, out_path)
+
 
         if wandb_run is not None:
             wandb_run.finish()

@@ -27,3 +27,4 @@ class GPTConfig(PretrainedConfig):
         self.bias = bias
         self.pos_init = pos_init
         super().__init__(**kwargs)
+
