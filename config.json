@@ -1,0 +1,18 @@
+{
+    "_name_or_path": "TuKoResearch/GenerationalPruning",
+    "architectures": ["GPT"],
+    "model_type": "GenerationalPruning.GPT",
+    "auto_map": {
+      "AutoConfig": "config.GPTConfig",
+      "AutoModelForCausalLM": "model.GPT"
+    },
+    "vocab_size": 50304,
+    "n_embd": 768,
+    "n_layer": 12,
+    "n_head": 12,
+    "block_size": 1024,
+    "dropout": 0.0,
+    "bias": false,
+    "pos_init": null
+  }
+  
