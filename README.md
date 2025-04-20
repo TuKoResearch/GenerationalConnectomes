@@ -1,7 +1,7 @@
 # Model connectomes: A generational approach to data-efficient language models  
 _Second Workshop on Representational Alignment at ICLR 2025_  
 
-**Authors:** Klemen Kotar & Greta Tuckute
+**By:** Klemen Kotar & Greta Tuckute
 
 ---
 
@@ -20,6 +20,34 @@ We have released the following pretrained Generational Connectome GPT models on 
 | [TuKoResearch/NoConnectomeGPT100M](https://huggingface.co/TuKoResearch/NoConnectomeGPT100M/) | Generational Pruning GPT without any connectome |
 
 You can evaluate any of these models on downstream NLP benchmarks by specifying the `--model_name` flag in the evaluation scripts.
+
+---
+
+## Installation
+
+1. **Clone the repo**  
+   ```bash
+   git clone https://github.com/TuKoResearch/GenerationalConnectomes.git
+   cd GenerationalConnectomes
+   ```
+
+2. **Create & activate a Conda environment**  
+   ```bash
+   conda create -n GenerationalConnectomes python=3.11 -y
+   conda activate GenerationalConnectomes
+   ```
+
+3. **Install PyTorch 2.6** (with the appropriate CUDA toolkit for your setup)  
+   ```bash
+   conda install -c pytorch pytorch==2.6.0 torchvision torchaudio cudatoolkit=11.7 -y
+   ```
+
+4. **Install the remaining dependencies**  
+   ```bash
+   pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
+
 
 ---
 
@@ -49,8 +77,19 @@ You can reproduce our evaluations by running the following evaluations using the
 ---
 
 ## Behavioral alignment
-We use the Futrell2018 reading time benchmark, which can be obtained from [brain-score language](https://github.com/brain-score/language) and can be loaded using an environment with `xarray` installed.
-The correlation with LLM surprisal can be run using: XX
+We use the Futrell2018 reading time benchmark, which can be obtained from [brain-score language](https://github.com/brain-score/language) and can be loaded using an environment with `xarray` installed. The data can be downloaded [here](https://huggingface.co/datasets/TuKoResearch/GenerationalConnectomesData/resolve/main/assy_Futrell2018.nc?download=true).
+
+Once downloaded place the Futrell2018 reading-time dataset (`assy_Futrell2018.nc`) in a directory called `data/`.
+
+To run the surprisal evaluation script and compute the Pearson correlation between model surprisal and human reading times (for the final checkpoint), execute:
+
+```bash
+python surprisal_eval.py \
+  --model_name TuKoResearch/GenerationalPrunning100M \
+  --tokenizer_name gpt2 \
+  --device cuda:0
+```
+
 
 ---
 
@@ -59,7 +98,7 @@ We use the Tuckute2024 neural benchmark, which can be downloaded from the follow
 
 In some of the analyses, we first localize the LLM language units, per the approach established in AlKhamissi et al., 2025 (_ACL_), from the [following repository](https://github.com/BKHMSI/llm-localization). We adapted this code (POINTER??) to output a binary mask which marks the LLM language units as 1. The [NeuralAlignment/apply_langloc_mask.py](https://github.com/klemenkotar/ConnectomePruning/blob/main/NeuralAlignment/apply_langloc_mask.py) script takes the the numpy binary mask for a given model, and saves the masked embedding values as a csv file, which can then serve as the input to [NeuralAlignment/fit_mapping.py](https://github.com/klemenkotar/ConnectomePruning/blob/main/NeuralAlignment/fit_mapping.py).
 
-The regression outputs can be downloaded [here](https://huggingface.co/datasets/TuKoResearch/GenerationalPruningEmbeddings/resolve/main/SHARE.zip?download=true).
+The regression outputs can be downloaded [here](https://huggingface.co/datasets/TuKoResearch/GenerationalConnectomesData/resolve/main/SHARE.zip?download=true).
 
 ---
 

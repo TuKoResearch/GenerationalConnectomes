@@ -1,0 +1,12 @@
+torch
+scipy
+tqdm
+wandb
+pandas
+matplotlib
+scikit-learn
+transformers
+tiktoken
+huggingface_hub
+xarray
+netcdf4
