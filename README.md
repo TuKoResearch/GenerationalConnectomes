@@ -48,6 +48,18 @@ You can evaluate any of these models on downstream NLP benchmarks by specifying 
    pip install -r requirements.txt
    ```
 
+---
+
+## Loading the Model
+```bash
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+# load tokenizer (note: you must use the GPT-2 tokenizer)
+tokenizer = AutoTokenizer.from_pretrained("gpt2")
+
+# load model (note: you must trust remote code to load the model)
+model = AutoModelForCausalLM.from_pretrained("TuKoResearch/ConnectomeGPT100M", trust_remote_code=True)
+```
 
 ---
 
