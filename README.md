@@ -9,7 +9,7 @@ _Second Workshop on Representational Alignment at ICLR 2025_
 
 ---
 
-## Released Models
+## Released models
 
 We have released the following pretrained Generational Connectome GPT models on the Hugging Face Hub:
 
@@ -17,7 +17,7 @@ We have released the following pretrained Generational Connectome GPT models on 
 |-------|-------------|
 | [TuKoResearch/ConnectomeGPT100M](https://huggingface.co/TuKoResearch/ConnectomeGPT100M/) | Generational Pruning GPT with learned connectome |
 | [TuKoResearch/RandomConnectomeGPT100M](https://huggingface.co/TuKoResearch/RandomConnectomeGPT100M/) | Generational Pruning GPT with random connectome |
-| [TuKoResearch/NoConnectomeGPT100M](https://huggingface.co/TuKoResearch/NoConnectomeGPT100M/) | Generational Pruning GPT without any connectome |
+| [TuKoResearch/NoConnectomeGPT100M](https://huggingface.co/TuKoResearch/NoConnectomeGPT100M/) | Generational Pruning GPT without connectome |
 
 You can evaluate any of these models on downstream NLP benchmarks by specifying the `--model_name` flag in the evaluation scripts.
 
@@ -37,12 +37,14 @@ You can evaluate any of these models on downstream NLP benchmarks by specifying 
    conda activate GenerationalConnectomes
    ```
 
-3. **Install PyTorch 2.6** (with the appropriate CUDA toolkit for your setup)  
+3. **Install PyTorch 2.6** (with the appropriate CUDA toolkit for your setup)
+   
+   Note that if you just want to evaluate the models (not train them), you can load them on CPU. In that case, omit the cuda command below.
    ```bash
    conda install -c pytorch pytorch==2.6.0 torchvision torchaudio cudatoolkit=11.7 -y
    ```
 
-4. **Install the remaining dependencies**  
+5. **Install the remaining dependencies**  
    ```bash
    pip install --upgrade pip
    pip install -r requirements.txt
@@ -50,7 +52,7 @@ You can evaluate any of these models on downstream NLP benchmarks by specifying 
 
 ---
 
-## Loading the Model
+## Loading the model
 ```bash
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -63,7 +65,7 @@ model = AutoModelForCausalLM.from_pretrained("TuKoResearch/ConnectomeGPT100M", t
 
 ---
 
-## NLP Evaluations
+## NLP evaluations
 
 We provide an evaluation script for mmlu and hellaswag inside of `evals/`.
 You can reproduce our evaluations by running the following evaluations using the model checkpoints from huggingface:
@@ -106,15 +108,15 @@ python surprisal_eval.py \
 ## Neural alignment
 We use the Tuckute2024 neural benchmark, which can be downloaded from the following [public repository](https://github.com/gretatuckute/drive_suppress_brains) or [brain-score language](https://github.com/brain-score/language). The cross-validation neural predictivity score can be run from [NeuralAlignment/fit_mapping.py](https://github.com/TuKoResearch/GenerationalConnectomes/blob/main/NeuralAlignment/fit_mapping.py) and looped across layers and models using [NeuralAlignment/loop_fit_mapping.py](https://github.com/TuKoResearch/GenerationalConnectomes/blob/main/NeuralAlignment/loop_fit_mapping.py).
 
-In some of the analyses, we first localize the LLM language units, per the approach established in AlKhamissi et al., 2025 (_ACL_), from the [following repository](https://github.com/BKHMSI/llm-localization). We adapted this code (POINTER??) to output a binary mask which marks the LLM language units as 1. The [NeuralAlignment/apply_langloc_mask.py](https://github.com/TuKoResearch/GenerationalConnectomes/blob/main/NeuralAlignment/apply_langloc_mask.py) script takes the the numpy binary mask for a given model, and saves the masked embedding values as a csv file, which can then serve as the input to [NeuralAlignment/fit_mapping.py](https://github.com/TuKoResearch/GenerationalConnectomes/blob/main/NeuralAlignment/fit_mapping.py).
+In some of the analyses, we first localize the LLM language units, per the approach established in AlKhamissi et al., 2025 (_ACL_), from the [following repository](https://github.com/BKHMSI/llm-localization). We adapted this code to output a binary mask which marks the LLM language units as 1. The [NeuralAlignment/apply_langloc_mask.py](https://github.com/TuKoResearch/GenerationalConnectomes/blob/main/NeuralAlignment/apply_langloc_mask.py) script takes the the numpy binary mask for a given model, and saves the masked embedding values as a csv file, which can then serve as the input to [NeuralAlignment/fit_mapping.py](https://github.com/TuKoResearch/GenerationalConnectomes/blob/main/NeuralAlignment/fit_mapping.py).
 
-The regression outputs can be downloaded [here](https://huggingface.co/datasets/TuKoResearch/GenerationalConnectomesData/resolve/main/SHARE.zip?download=true).
+The binary langloc masks, the model embeddings, and the regression outputs can be downloaded [here](https://huggingface.co/datasets/TuKoResearch/GenerationalConnectomesData/resolve/main/SHARE.zip?download=true).
 
 ---
 
-## LLM Training
+## LLM training
 
-Once your environment is ready, train the Generational Pruning GPT model from a pruned checkpoitn with:
+Once your environment is ready, train the Generational Pruning GPT model from a pruned checkpoint with:
 
 ```bash
 # Single-GPU debug run
