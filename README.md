@@ -53,8 +53,6 @@ You can evaluate any of these models on downstream NLP benchmarks by specifying 
 
 ## NLP Evaluations
 
-### MMLU Benchmark
-
 We provide an evaluation script for mmlu and hellaswag inside of `evals/`.
 You can reproduce our evaluations by running the following evaluations using the model checkpoints from huggingface:
 
